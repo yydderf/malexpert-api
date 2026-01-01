@@ -1,5 +1,11 @@
 #[macro_use] extern crate rocket;
 
+mod cors;
+mod routes;
+mod consts;
+
+use crate::cors::{Cors, options};
+
 #[get("/")]
 fn index() -> &'static str {
     "Hello, malexpert!"
@@ -7,5 +13,8 @@ fn index() -> &'static str {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+    rocket::build()
+        .attach(Cors)
+        .mount("/", routes![index, options])
+        .mount("/samples", routes::samples::routes())
 }
