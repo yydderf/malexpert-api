@@ -1,14 +1,11 @@
 #[macro_use] extern crate rocket;
 
+mod fairings;
 mod services;
+mod logging;
 mod routes;
 mod consts;
 mod domain;
-mod logger;
-mod cors;
-
-use crate::cors::{Cors, options};
-use crate::logger::{ Logger };
 
 #[get("/")]
 fn index() -> &'static str {
@@ -17,9 +14,11 @@ fn index() -> &'static str {
 
 #[launch]
 fn rocket() -> _ {
+    logging::init();
+
     rocket::build()
-        .attach(Cors)
-        .attach(Logger)
-        .mount("/", routes![index, options])
+        .attach(fairings::cors::Cors)
+        .attach(fairings::logger::Logger)
+        .mount("/", routes![index, fairings::cors::options])
         .mount("/samples", routes::samples::routes())
 }

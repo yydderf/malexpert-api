@@ -1,6 +1,5 @@
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::{Request, Response, Data};
-use tracing::info;
 
 pub struct Logger;
 
@@ -15,7 +14,7 @@ impl Fairing for Logger {
     }
 
     async fn on_request(&self, req: &mut Request<'_>, _: &mut Data<'_>) {
-        info!(
+        println!(
             "Incoming from {}: {}, {}",
             req.client_ip().map(|ip| ip.to_string()).unwrap_or_else(|| "<unknown>".into()), req.method(), req.uri()
         );
