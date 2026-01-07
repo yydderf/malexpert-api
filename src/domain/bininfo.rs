@@ -28,6 +28,13 @@ pub enum BinaryType {
     Unknown,
 }
 
+pub enum BinaryKind {
+    PE,
+    Elf,
+    Mach,
+    Unknown,
+}
+
 #[derive(Debug, Serialize)]
 pub struct Metadata {
     pub size: u64,
