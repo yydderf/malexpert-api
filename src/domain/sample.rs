@@ -1,5 +1,5 @@
 use crate::consts;
-use crate::domain::bininfo::BinInfo;
+use crate::domain::bininfo::Metadata;
 
 use uuid::Uuid;
 use std::path::PathBuf;
@@ -23,8 +23,8 @@ impl Sample {
         let binpath = dir.join("binary");
         Self { id: id.to_string(), dir, binpath, analyzed: false }
     }
-    pub fn load_bin(&self) -> io::Result<BinInfo> {
-        BinInfo::from_path(&self.binpath)
+    pub fn load_bin(&self) -> io::Result<Metadata> {
+        Metadata::from_path(&self.binpath)
     }
     pub fn exists(&self) -> bool {
         self.dir.is_dir()

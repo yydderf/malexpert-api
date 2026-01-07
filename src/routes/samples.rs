@@ -7,21 +7,11 @@ use std::path::PathBuf;
 use std::fs;
 
 use crate::domain::sample::Sample;
-use crate::domain::bininfo::{BinFormat, Bitness, Endianness, BinInfo};
+use crate::domain::bininfo::Metadata;
 
 #[derive(serde::Serialize)]
 pub struct UploadResp {
     sample_id: String,
-}
-
-#[derive(serde::Serialize)]
-pub struct Metadata {
-    sample_id: String,
-    hash: String,
-    size: u64,
-    format: BinFormat,
-    bit: Bitness,
-    endianness: Endianness,
 }
 
 fn upload_preprocess() -> Result<(String, PathBuf), Status> {
@@ -75,14 +65,14 @@ pub fn analyze(sample_id: String) -> Result<Status, Status> {
 
 // GET /samples/{id}/metadata → json metadata
 #[get("/<sample_id>/metadata")]
-pub fn get_metadata(sample_id: String) -> Result<Json<BinInfo>, Status> {
-    let bininfo = Sample::from_id(&sample_id)
+pub fn get_metadata(sample_id: String) -> Result<Json<Metadata>, Status> {
+    let metadata = Sample::from_id(&sample_id)
         .load_bin()
         .map_err(|e| {
             error!("Failed to load bin from id {}: {}", &sample_id, e);
             Status::InternalServerError
         })?;
-    Ok(Json(bininfo))
+    Ok(Json(metadata))
 }
 
 // GET /samples/{id}/libraries → imported libs/APIs

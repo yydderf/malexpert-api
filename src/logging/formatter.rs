@@ -41,12 +41,12 @@ where
             .format(crate::consts::logging::TS_FMT)
             .unwrap();
         let level = metadata.level().custom_format();
-        let target = metadata.target();
         writer.write_str(&ts)?;
         writer.write_char(' ')?;
         writer.write_str(level)?;
-        writer.write_str(target)?;
-        writer.write_char(' ')?;
+        // let target = metadata.target();
+        // writer.write_str(target)?;
+        // writer.write_char(' ')?;
         ctx.field_format().format_fields(writer.by_ref(), event)?;
         writeln!(writer)
     }

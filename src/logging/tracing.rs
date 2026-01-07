@@ -21,7 +21,10 @@ pub fn init() {
         .unwrap_or_else(|_| EnvFilter::new("info,rocket=info"));
     let file_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("info,rocket=info"));
-    let no_rocket_launch = filter_fn(|meta| !meta.target().starts_with("rocket::launch"));
+    let no_rocket_launch = filter_fn(|meta|
+        !meta.target().starts_with("rocket::launch")
+        && !meta.target().starts_with("rocket::shield")
+    );
 
     let console_layer = tracing_subscriber::fmt::layer()
         .event_format(CustomFormatter)
