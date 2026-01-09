@@ -6,6 +6,7 @@ mod logging;
 mod routes;
 mod consts;
 mod domain;
+mod api;
 
 #[get("/")]
 fn index() -> &'static str {

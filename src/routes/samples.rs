@@ -9,31 +9,11 @@ use std::{io::Read, fs::{self, File}};
 
 use crate::domain::sample::Sample;
 use crate::domain::bininfo::{Metadata, BinaryKind};
+use crate::api::error::APIError;
 
 #[derive(serde::Serialize)]
 pub struct UploadResp {
     sample_id: String,
-}
-
-#[derive(serde::Serialize)]
-pub struct APIError {
-    title: String,
-    detail: String,
-}
-
-#[derive(Responder)]
-pub enum UploadResponse {
-    #[response(status = 200, content_type = "json")]
-    Ok(Json<UploadResp>),
-
-    #[response(status = 400, content_type = "json")]
-    Unsupported(Json<APIError>),
-
-    #[response(status = 415, content_type = "json")]
-    BadRequest(Json<APIError>),
-
-    #[response(status = 500, content_type = "json")]
-    Internal(Json<APIError>),
 }
 
 fn upload_preprocess() -> Result<(String, PathBuf), Status> {
@@ -66,52 +46,37 @@ fn lazy_validate_binary(path: impl AsRef<Path>) -> std::io::Result<BinaryKind> {
 }
 
 #[post("/upload/form", data = "<file>")]
-pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> UploadResponse {
+pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> Result<Json<UploadResp>, APIError> {
     if file.len() == 0 {
-        return UploadResponse::BadRequest(Json(APIError {
-            title: "Empty upload".into(),
-            detail: "Please try again".into(),
-        }));
+        return Err(APIError::bad_request("Empty Upload", "Please try again"));
     }
 
     let tmp_path = match file.path() {
         Some(p) => p,
         None => {
-            return UploadResponse::Internal(Json(APIError {
-                title: "Internal Server Error".into(),
-                detail: "Please try again later".into(),
-            }))
+            return Err(APIError::internal("Internal Server Error", "Please try again later"))
         }
     };
 
     match lazy_validate_binary(tmp_path) {
         Ok(BinaryKind::Elf | BinaryKind::PE | BinaryKind::Mach) => {}
         Ok(_) | Err(_) => {
-            return UploadResponse::Unsupported(Json(APIError {
-                title: "Unsupported file type".into(),
-                detail: "Please upload a valid ELF/PE binary".into(),
-            }))
+            return Err(APIError::unsupported("Unsupported File Type", "Please upload a valid ELF/PE binary"))
         }
     }
 
     let (sample_id, sample_path) = match upload_preprocess() {
         Ok(v) => v,
         Err(_) => {
-            return UploadResponse::Internal(Json(APIError {
-                title: "Internal Server Error".into(),
-                detail: "Please try again later".into(),
-            }))
+            return Err(APIError::internal("Internal Server Error", "Please try again later"))
         }
     };
 
     if file.persist_to(&sample_path).await.is_err() {
-        return UploadResponse::Internal(Json(APIError {
-            title: "Internal Server Error".into(),
-            detail: "Please try again later".into(),
-        }));
+        return Err(APIError::internal("Internal Server Error", "Please try again later"));
     }
 
-    UploadResponse::Ok(Json(UploadResp { sample_id }))
+    Ok(Json(UploadResp { sample_id }))
 }
 
 // #[post("/upload/raw", data = "<data>")]

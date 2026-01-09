@@ -1,7 +1,6 @@
 use rocket::serde::Serialize;
 use ring::digest::{Context, SHA256};
 use data_encoding::HEXLOWER;
-use time::OffsetDateTime;
 use std::{fs, io::Read, path::Path};
 use goblin::Object;
 
@@ -44,8 +43,6 @@ pub struct Metadata {
     pub bitness: Option<u8>,
     pub endianness: Option<String>,
     pub exec_type: BinaryType,
-    pub modified: String,
-    pub created: String,
 }
 
 impl Metadata {
@@ -53,22 +50,6 @@ impl Metadata {
         let path = path.as_ref().to_path_buf();
         let metadata = fs::metadata(&path)?;
         let size = metadata.len();
-
-        let modified = metadata
-            .modified()
-            .ok()
-            .and_then(|t| OffsetDateTime::from(t)
-                .format(crate::consts::logging::TS_FMT)
-                .ok())
-            .unwrap_or_else(|| "".to_string());
-
-        let created = metadata
-            .created()
-            .ok()
-            .and_then(|t| OffsetDateTime::from(t)
-                .format(crate::consts::logging::TS_FMT)
-                .ok())
-            .unwrap_or_else(|| "".to_string());
 
         let mut file = fs::File::open(&path)?;
         let mut context = Context::new(&SHA256);
@@ -125,8 +106,6 @@ impl Metadata {
             bitness,
             endianness,
             exec_type,
-            modified,
-            created,
         })
     }
 }
