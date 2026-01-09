@@ -1,0 +1,3 @@
+[submodule "external/malexp"]
+	path = external/malexp
+	url = https://github.com/yydderf/MalwareExpert-Implementation.git
