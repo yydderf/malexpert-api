@@ -9,7 +9,8 @@ use std::{io::Read, fs::{self, File}};
 
 use crate::domain::sample::Sample;
 use crate::domain::bininfo::{Metadata, BinaryKind};
-use crate::api::error::APIError;
+// use crate::api::error::APIError;
+use crate::api::response::APIResponse;
 
 #[derive(serde::Serialize)]
 pub struct UploadResp {
@@ -46,37 +47,37 @@ fn lazy_validate_binary(path: impl AsRef<Path>) -> std::io::Result<BinaryKind> {
 }
 
 #[post("/upload/form", data = "<file>")]
-pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> Result<Json<UploadResp>, APIError> {
+pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> APIResponse<UploadResp> {
     if file.len() == 0 {
-        return Err(APIError::bad_request("Empty Upload", "Please try again"));
+        return APIResponse::err_bad_request("Empty Upload", "Please try again");
     }
 
     let tmp_path = match file.path() {
         Some(p) => p,
         None => {
-            return Err(APIError::internal("Internal Server Error", "Please try again later"))
+            return APIResponse::err_internal("Internal Server Error", "Please try again later")
         }
     };
 
     match lazy_validate_binary(tmp_path) {
         Ok(BinaryKind::Elf | BinaryKind::PE | BinaryKind::Mach) => {}
         Ok(_) | Err(_) => {
-            return Err(APIError::unsupported("Unsupported File Type", "Please upload a valid ELF/PE binary"))
+            return APIResponse::err_unsupported("Unsupported File Type", "Please upload a valid ELF/PE binary")
         }
     }
 
     let (sample_id, sample_path) = match upload_preprocess() {
         Ok(v) => v,
         Err(_) => {
-            return Err(APIError::internal("Internal Server Error", "Please try again later"))
+            return APIResponse::err_internal("Internal Server Error", "Please try again later")
         }
     };
 
     if file.persist_to(&sample_path).await.is_err() {
-        return Err(APIError::internal("Internal Server Error", "Please try again later"));
+        return APIResponse::err_internal("Internal Server Error", "Please try again later");
     }
 
-    Ok(Json(UploadResp { sample_id }))
+    APIResponse::ok(UploadResp { sample_id })
 }
 
 // #[post("/upload/raw", data = "<data>")]
