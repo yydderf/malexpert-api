@@ -22,4 +22,5 @@ fn rocket() -> _ {
         .attach(fairings::logger::Logger)
         .mount("/", routes![index, fairings::cors::options])
         .mount("/samples", routes::samples::routes())
+        .mount("/pipeline", routes::pipeline::routes())
 }

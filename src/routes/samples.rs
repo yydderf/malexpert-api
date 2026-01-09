@@ -1,21 +1,21 @@
 use rocket::Route;
 use rocket::fs::TempFile;
-use rocket::serde::json::Json;
 use rocket::http::Status;
 use rocket::form::Form;
-use rocket::response::Responder;
 use std::path::{Path, PathBuf};
 use std::{io::Read, fs::{self, File}};
 
 use crate::domain::sample::Sample;
 use crate::domain::bininfo::{Metadata, BinaryKind};
-// use crate::api::error::APIError;
 use crate::api::response::APIResponse;
 
 #[derive(serde::Serialize)]
 pub struct UploadResp {
     sample_id: String,
 }
+
+#[derive(serde::Serialize)]
+pub struct AnalyzeResp;
 
 fn upload_preprocess() -> Result<(String, PathBuf), Status> {
     let sample = Sample::create();
@@ -87,22 +87,24 @@ pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> APIResponse<Upl
 //     // --data-binary <file> <url>
 // }
 
+// pub fn analyze(sample_id: String) -> Result<Status, Status> {
 #[post("/<sample_id>/analyze")]
-pub fn analyze(sample_id: String) -> Result<Status, Status> {
+pub fn analyze(sample_id: String) -> APIResponse<AnalyzeResp> {
     let sample = Sample::from_id(&sample_id);
-    if sample.exists() { Ok(Status::Ok) } else { Ok(Status::NotFound) }
+    if sample.exists() { APIResponse::ok(AnalyzeResp{}) } else { APIResponse::err_not_found("Sample Not Found", "Please try again") }
 }
 
 // GET /samples/{id}/metadata → json metadata
 #[get("/<sample_id>/metadata")]
-pub fn get_metadata(sample_id: &str) -> Result<Json<Metadata>, Status> {
-    let metadata = Sample::from_id(&sample_id)
-        .load_bin()
-        .map_err(|e| {
+pub fn metadata(sample_id: &str) -> APIResponse<Metadata> {
+    let metadata = match Sample::from_id(&sample_id).load_bin() {
+        Ok(v) => v,
+        Err(e) => {
             error!("Failed to load bin from id {}: {}", &sample_id, e);
-            Status::InternalServerError
-        })?;
-    Ok(Json(metadata))
+            return APIResponse::err_internal("Internal Server Error", "Please try again later")
+        }
+    };
+    APIResponse::ok(metadata)
 }
 
 // GET /samples/{id}/libraries → imported libs/APIs
@@ -111,10 +113,9 @@ pub fn get_metadata(sample_id: &str) -> Result<Json<Metadata>, Status> {
 // #[get("/<sample_id>/artifacts")]
 
 pub fn routes() -> Vec<Route> {
-//     routes![upload_binary_form, upload_binary_raw]
     routes![
         upload_binary_form,
         analyze,
-        get_metadata,
+        metadata,
     ]
 }

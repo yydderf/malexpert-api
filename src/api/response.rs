@@ -58,6 +58,7 @@ impl<T> APIResponse<T> {
     api_error_ctor!(err_internal,    Status::InternalServerError);
     api_error_ctor!(err_bad_request, Status::BadRequest);
     api_error_ctor!(err_unsupported, Status::UnsupportedMediaType);
+    api_error_ctor!(err_not_found,   Status::NotFound);
 }
 
 // defines how to convert APIError to HTTP response 
