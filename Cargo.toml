@@ -21,3 +21,5 @@ uuid = { version = "1.19.0", features = ["v4"] }
 ring = "0.17.14"
 data-encoding = "2.9.0"
 goblin = "0.10.4"
+
+reqwest = { version = "0.13", features = ["json"] }

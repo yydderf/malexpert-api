@@ -15,35 +15,35 @@ use std::collections::HashMap;
   "version": "2026-01-09T00:00:00Z"
 }
 */
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Catalog {
     pub stages: HashMap<String, PipelineStage>,
     pub version: String,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct PipelineStage {
     pub models: Vec<ModelInfo>,
     pub params: HashMap<String, ParamSpec>,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct ModelInfo {
-    pub id: String,
-    pub label: String,
+    pub name: String,
+    pub help: String,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
-pub struct ParamSpec {
-    #[serde(rename = "int")]
-    Int: i64,
-    #[serde(rename = "float")]
-    Float: f64,
+pub enum ParamSpec {
+    #[serde(rename = "int")] // "type": "Int" -> "type": "int"
+    Int { default: i64 },
     #[serde(rename = "bool")]
-    Bool: bool,
+    Bool { default: bool },
+    #[serde(rename = "float")]
+    Float { default: f64 },
     #[serde(rename = "string")]
-    r#string: String,
+    String { default: String },
     #[serde(rename = "enum")]
-    r#enum: Vec<String>,
+    Enum { values: Vec<String>, default: String },
 }
