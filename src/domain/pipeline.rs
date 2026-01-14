@@ -25,6 +25,8 @@ pub struct Catalog {
 pub struct PipelineStage {
     pub models: Vec<ModelInfo>,
     pub params: HashMap<String, ParamSpec>,
+    pub description: String,
+    pub next: Vec<String>,
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
