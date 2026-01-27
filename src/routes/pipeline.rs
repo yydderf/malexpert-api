@@ -1,14 +1,11 @@
-use rocket::Route;
-use rocket::State;
 use std::collections::HashMap;
+
+use rocket::{Route, State};
 use tracing::error;
 
 use crate::domain::pipeline::Catalog;
 use crate::api::response::APIResponse;
 use crate::services::clients::malexp::MalexpClient;
-
-// consts::pipeline::MALEXP_CONFIG_DIR
-// consts::pipeline::MAPEXP_CONFIG_ANALYZER ...
 
 // GET /pipeline/catalog → available models of all stages
 #[get("/catalog")]

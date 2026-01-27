@@ -20,7 +20,7 @@ fn rocket() -> _ {
     logging::init();
 
     rocket::build()
-        .manage(MalexpClient::new(crate::consts::client::MALEXP_API_BASE_URL.as_str()))
+        .manage(MalexpClient::new(crate::consts::client::malexp::BASE_URL.as_str()))
         .attach(fairings::cors::Cors)
         .attach(fairings::logger::Logger)
         .mount("/", routes![index, fairings::cors::options])

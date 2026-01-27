@@ -1,16 +1,12 @@
-use crate::consts;
-use crate::domain::bininfo::Metadata;
+use std::path::PathBuf;
 
 use uuid::Uuid;
-use std::path::PathBuf;
-use std::io;
 
 #[derive(Debug)]
 pub struct Sample {
     pub id: String,
     pub dir: PathBuf,
     pub binpath: PathBuf,
-    pub analyzed: bool,
 }
 
 impl Sample {
@@ -19,12 +15,9 @@ impl Sample {
         Self::from_id(&id)
     }
     pub fn from_id(id: &str) -> Self {
-        let dir = PathBuf::from(consts::upload::DIR).join(&id);
+        let dir = PathBuf::from(crate::consts::upload::DIR).join(&id);
         let binpath = dir.join("binary");
-        Self { id: id.to_string(), dir, binpath, analyzed: false }
-    }
-    pub fn load_bin(&self) -> io::Result<Metadata> {
-        Metadata::from_path(&self.binpath)
+        Self { id: id.to_string(), dir, binpath }
     }
     pub fn exists(&self) -> bool {
         self.dir.is_dir()

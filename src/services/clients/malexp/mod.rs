@@ -1,4 +1,5 @@
 pub mod catalog;
+pub mod run;
 
 use rocket::serde::json::serde_json;
 use crate::api::error::APIErrorBody;
@@ -35,16 +36,23 @@ impl MalexpClient {
         Self::parse_json_response::<T>(response).await
     }
 
-    async fn post_json<B: serde::Serialize, T: for<'de> serde::Deserialize<'de>>(
-        &self,
-        path: &str,
-        body: B,
-    ) {
+    async fn post_json<B, T>(&self, path: &str, body: &B) -> Result<T, APIErrorBody>
+    where
+        B: serde::Serialize,
+        T: for<'de> serde::Deserialize<'de>,
+    {
+        let response = self.http.post(self.url(path))
+            .json(body)
+            .send()
+            .await
+            .map_err(|e| APIErrorBody { title: "Network Error".to_string(), detail: Some(e.to_string()) })?;
+        Self::parse_json_response::<T>(response).await
     }
 
-    async fn parse_json_response<T: for<'de> serde::Deserialize<'de>>(
-        response: reqwest::Response,
-    ) -> Result<T, APIErrorBody> {
+    async fn parse_json_response<T>(response: reqwest::Response) -> Result<T, APIErrorBody>
+    where
+        T: for<'de> serde::Deserialize<'de>,
+    {
         let status = response.status();
         if !status.is_success() {
             let text = response.text().await.unwrap_or_default();

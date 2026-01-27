@@ -1,4 +1,3 @@
-use rocket::Route;
 use rocket::fs::TempFile;
 use rocket::http::Status;
 use rocket::form::Form;
@@ -6,16 +5,9 @@ use std::path::{Path, PathBuf};
 use std::{io::Read, fs::{self, File}};
 
 use crate::domain::sample::Sample;
-use crate::domain::bininfo::{Metadata, BinaryKind};
+use crate::domain::bininfo::BinaryKind;
+use crate::domain::json::samples::upload::UploadResp;
 use crate::api::response::APIResponse;
-
-#[derive(serde::Serialize)]
-pub struct UploadResp {
-    sample_id: String,
-}
-
-#[derive(serde::Serialize)]
-pub struct AnalyzeResp;
 
 fn upload_preprocess() -> Result<(String, PathBuf), Status> {
     let sample = Sample::create();
@@ -80,6 +72,7 @@ pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> APIResponse<Upl
     APIResponse::ok(UploadResp { sample_id })
 }
 
+
 // #[post("/upload/raw", data = "<data>")]
 // pub async fn upload_binary_raw(data: Data<'_>) -> Result<Status, Status> {
 //     // interact w/ curl:
@@ -87,35 +80,3 @@ pub async fn upload_binary_form(mut file: Form<TempFile<'_>>) -> APIResponse<Upl
 //     // --data-binary <file> <url>
 // }
 
-// pub fn analyze(sample_id: String) -> Result<Status, Status> {
-#[post("/<sample_id>/analyze")]
-pub fn analyze(sample_id: String) -> APIResponse<AnalyzeResp> {
-    let sample = Sample::from_id(&sample_id);
-    if sample.exists() { APIResponse::ok(AnalyzeResp{}) } else { APIResponse::err_not_found("Sample Not Found", "Please try again") }
-}
-
-// GET /samples/{id}/metadata → json metadata
-#[get("/<sample_id>/metadata")]
-pub fn metadata(sample_id: &str) -> APIResponse<Metadata> {
-    let metadata = match Sample::from_id(&sample_id).load_bin() {
-        Ok(v) => v,
-        Err(e) => {
-            error!("Failed to load bin from id {}: {}", &sample_id, e);
-            return APIResponse::err_internal("Internal Server Error", "Please try again later")
-        }
-    };
-    APIResponse::ok(metadata)
-}
-
-// GET /samples/{id}/libraries → imported libs/APIs
-// #[get("/<sample_id>/libraries")]
-// GET /samples/{id}/artifacts → list what’s available
-// #[get("/<sample_id>/artifacts")]
-
-pub fn routes() -> Vec<Route> {
-    routes![
-        upload_binary_form,
-        analyze,
-        metadata,
-    ]
-}

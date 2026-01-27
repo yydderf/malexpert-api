@@ -27,6 +27,7 @@ pub struct PipelineStage {
     pub params: HashMap<String, ParamSpec>,
     pub description: String,
     pub next: Vec<String>,
+    pub default: String,
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -49,3 +50,4 @@ pub enum ParamSpec {
     #[serde(rename = "enum")]
     Enum { values: Vec<String>, default: String },
 }
+
