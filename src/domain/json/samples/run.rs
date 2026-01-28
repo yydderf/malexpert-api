@@ -3,13 +3,13 @@ use std::path::PathBuf;
 use crate::domain::usersel::UserSelections;
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct RunReq {
-    pub sample_path: PathBuf,
-    pub sample_hash_val: String,
+pub struct RunReq<'a> {
+    pub sample_id: &'a str,
+    pub sample_hash_val: &'a str,
     pub user_selections: UserSelections,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct RunResp {
-    pub job_id: i32,
+    pub job_id: String,
 }

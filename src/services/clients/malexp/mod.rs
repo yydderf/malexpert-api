@@ -1,9 +1,12 @@
 pub mod catalog;
 pub mod run;
 
-use rocket::serde::json::serde_json;
-use crate::api::error::APIErrorBody;
 use std::time::Duration;
+
+use rocket::serde::json::serde_json;
+use anyhow::Context;
+
+use crate::api::error::APIErrorBody;
 
 pub struct MalexpClient {
     base_url: String,
@@ -46,6 +49,7 @@ impl MalexpClient {
             .send()
             .await
             .map_err(|e| APIErrorBody { title: "Network Error".to_string(), detail: Some(e.to_string()) })?;
+        // Self::parse_json_response::<T>(response).await
         Self::parse_json_response::<T>(response).await
     }
 
@@ -53,17 +57,54 @@ impl MalexpClient {
     where
         T: for<'de> serde::Deserialize<'de>,
     {
+        Self::parse_json_response_anyhow(response)
+            .await
+            .map_err(|e| {
+                tracing::error!("{:#}", e);
+                APIErrorBody { title: "Upstream API Error".to_string(), detail: Some(e.to_string()) }
+            })
+        // let status = response.status();
+        // if !status.is_success() {
+        //     let text = response.text().await.unwrap_or_default();
+        //     let message = serde_json::from_str::<APIErrorBody>(&text)
+        //         .map(|b| b.detail)
+        //         .unwrap_or(Some(text));
+        //     return Err(APIErrorBody { title: "Internal Server Error".to_string(), detail: message });
+        // }
+
+        // response.json::<T>()
+        //     .await
+        //     .map_err(|e| APIErrorBody { title: "Invalid Json".to_string(), detail: Some(e.to_string()) })
+    }
+
+    async fn parse_json_response_anyhow<T>(response: reqwest::Response) -> anyhow::Result<T>
+    where
+        T: for<'de> serde::Deserialize<'de>,
+    {
         let status = response.status();
+        let bytes = response
+            .bytes()
+            .await
+            .context("Failed to read response body")?;
+
         if !status.is_success() {
-            let text = response.text().await.unwrap_or_default();
-            let message = serde_json::from_str::<APIErrorBody>(&text)
-                .map(|b| b.detail)
-                .unwrap_or(Some(text));
-            return Err(APIErrorBody { title: "Internal Server Error".to_string(), detail: message });
+            let detail = serde_json::from_slice::<APIErrorBody>(&bytes)
+                .ok()
+                .and_then(|b| b.detail)
+                .or_else(|| String::from_utf8(bytes.to_vec()).ok())
+                .unwrap_or_else(|| "<non-utf8 response body>".to_string());
+
+            anyhow::bail!(
+                "HTTP {} error from upstream {}",
+                status,
+                detail,
+            );
         }
 
-        response.json::<T>()
-            .await
-            .map_err(|e| APIErrorBody { title: "Invalid Json".to_string(), detail: Some(e.to_string()) })
+        let value = serde_json::from_slice::<T>(&bytes)
+            .context("Failed to deserialize JSON response")?;
+
+        Ok(value)
     }
+
 }

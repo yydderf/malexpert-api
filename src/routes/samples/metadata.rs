@@ -1,20 +1,33 @@
-use crate::domain::sample::Sample;
-use crate::domain::metadata::Metadata;
-use crate::api::response::APIResponse;
+use rocket::State;
+
+use crate::{
+    domain::{sample::Sample, metadata::Metadata, signed::Signed},
+    api::response::APIResponse,
+    crypto::secret::Secret,
+};
 
 // GET /samples/{id}/metadata → json metadata
 #[get("/<sample_id>/metadata")]
-pub fn metadata(sample_id: &str) -> APIResponse<Metadata> {
+pub fn get_metadata(sample_id: &str, secret: &State<Secret>) -> APIResponse<Metadata> {
     // let metadata = match Metadata::from_id(&sample_id) {}
     let sample = Sample::from_id(&sample_id);
     let metapath = sample.dir.join(crate::consts::path::metadata::FILENAME);
 
+    let span = tracing::span!(tracing::Level::INFO, "metadata_span");
+    let _guard = span.enter();
+
     if metapath.exists() {
-        match Metadata::load(metapath) {
-            Ok(m) => { return APIResponse::ok(m); }
-            Err(_) => {}
+        if let Ok(signed) = Signed::<Metadata>::load(&metapath) {
+            if secret.validate(&signed).is_ok() {
+                tracing::debug!("cache hit");
+                return APIResponse::ok(signed.into_payload());
+            } else {
+                tracing::debug!("signature mismatched");
+            }
         }
     }
+
+    tracing::debug!("generating new metadata");
 
     let metadata = match Metadata::try_from(&sample) {
         Ok(v) => v,
@@ -24,9 +37,10 @@ pub fn metadata(sample_id: &str) -> APIResponse<Metadata> {
         }
     };
 
-    // tokio::spawn(async move {
-    //     metadata.save(metapath)
-    // });
+    // tokio::spawn(async move {});
+    let signed_metadata = secret.sign::<Metadata>(metadata).expect("should be able to sign");
 
-    APIResponse::ok(metadata)
+    signed_metadata.save(metapath).unwrap();
+
+    APIResponse::ok(signed_metadata.into_payload())
 }

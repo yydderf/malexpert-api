@@ -1,4 +1,4 @@
-use std::{io::Read, path::{Path, PathBuf}, fs, convert::TryFrom};
+use std::{io::Read, path::{Path, PathBuf}, fs, convert::{TryFrom, Into}};
 
 use rocket::serde::{json::serde_json, Serialize, Deserialize};
 use goblin::Object;
@@ -32,22 +32,6 @@ pub struct Metadata {
     pub bitness: Option<u8>,
     pub endianness: Option<String>,
     pub exec_type: BinaryType,
-}
-
-impl Metadata {
-    pub fn save(&self, path: impl AsRef<Path>) -> anyhow::Result<()> {
-        let tmp_path = path.as_ref().with_extension(crate::consts::path::TMP_EXT);
-        let bytes = serde_json::to_vec(self)?;
-        fs::write(&tmp_path, bytes)?;
-        fs::rename(&tmp_path, path)?;
-
-        Ok(())
-    }
-
-    pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
-        let bytes = fs::read(path)?;
-        Ok(serde_json::from_slice(&bytes)?)
-    }
 }
 
 impl TryFrom<&Sample> for Metadata {

@@ -5,6 +5,11 @@
 Configuration can be adjusted by modifying `Rocket.toml`
 
 ```bash
+MALEXP_HMAC_KEY=$(openssl rand -base64 32) \
+cargo run
+# or toggle the debugging message
+MALEXP_HMAC_KEY=$(openssl rand -base64 32) \
+RUST_LOG=malexpert_api=debug \
 cargo run
 ```
 

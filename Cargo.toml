@@ -6,22 +6,33 @@ edition = "2024"
 [dependencies]
 rocket = { version = "0.5.1", features = ["json"] }
 
+# logging
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json", "time"] }
 tracing-appender = "0.2"
 tracing-log = "0.2"
 once_cell = "1.21"
 
+# error
+anyhow = "1.0"
+
+# timezone
 time = { version = "0.3", features = ["formatting", "macros"] }
 time-tz = "2.0"
 
+# serialize / deserialize
 serde = { version = "1.0", features = ["derive"] }
+postcard = { version = "1.1", features = ["alloc"] }
+
 uuid = { version = "1.19.0", features = ["v4"] }
 
+# cryptography
 ring = "0.17.14"
 data-encoding = "2.9.0"
-goblin = "0.10.4"
+base64 = "0.22"
 
+# networking
 reqwest = { version = "0.13", features = ["json"] }
 
-anyhow = "1.0"
+# binary
+goblin = "0.10.4"

@@ -13,7 +13,7 @@ mod metadata;
 pub fn routes() -> Vec<Route> {
     routes![
         run::run,
-        metadata::metadata,
+        metadata::get_metadata,
         upload::upload_binary_form,
     ]
 }
