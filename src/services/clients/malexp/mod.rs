@@ -16,6 +16,7 @@ use crate::consts::client::malexp;
 pub struct MalexpClient {
     base_url: String,
     http: reqwest::Client,
+    es_http: reqwest::Client,
 }
 
 impl MalexpClient {
@@ -26,6 +27,9 @@ impl MalexpClient {
                 .timeout(Duration::from_secs(crate::consts::client::TIMEOUT_SECS))
                 .build()
                 .expect("client should be built"),
+            es_http: reqwest::Client::builder()
+                .build()
+                .expect("client should be built"),
         }
     }
 
@@ -34,12 +38,14 @@ impl MalexpClient {
     }
 
     async fn get_event_stream(&self, path: &str, event_id: &str) -> Result<EventStream![], APIErrorBody> {
-        let response = self.http.get(self.url(path))
+        let response = self.es_http.get(self.url(path))
             .header("Accept", "text/event-stream")
+            .header("Cache-Control", "no-cache")
             .header(malexp::events::LAST_EVENT_ID, event_id) // 0-0 / $ / event id
             .send()
             .await
             .map_err(|e| APIErrorBody { title: "Network Error".to_string(), detail: Some(e.to_string()) })?;
+
         Self::parse_event_response(response)
             .await
             .map_err(|e| APIErrorBody { title: "Internal Server Error".to_string(), detail: Some(e.to_string()) })
@@ -125,12 +131,15 @@ impl MalexpClient {
             let text = response.text().await.unwrap_or_default();
             anyhow::bail!("HTTP {status} error from upstream {text}");
         }
+
         let mut byte_stream = response.bytes_stream();
         let mut parser = SSEParser::new();
 
         Ok(EventStream! {
-            yield Event::data("connected").event(malexp::events::HELLO);
+            // yield Event::data("rocket connected").event(malexp::events::HELLO);
             while let Some(item) = byte_stream.next().await {
+                // timeout
+                // println!("{:?}", item);
                 match item {
                     Ok(bytes) => {
                         let text = String::from_utf8_lossy(&bytes);
@@ -148,6 +157,8 @@ impl MalexpClient {
                             if let Some(id) = &frame.id {
                                 ev = ev.id(id.clone());
                             }
+                            println!("{:?}", ev);
+                            yield ev;
                         }
                     }
                     Err(e) => {
@@ -158,5 +169,6 @@ impl MalexpClient {
             }
             yield Event::data("closed").event(malexp::events::GOODBYE);
         })
+        //.heartbeat(None))
     }
 }

@@ -21,9 +21,9 @@ impl SSEParser {
             let mut line = self.buf[..pos].to_string();
             self.buf.drain(..=pos);
 
-            if line.ends_with('\r') {
-                line.pop();
-            }
+            // if line.ends_with('\r') {
+            //     line.pop();
+            // }
 
             if line.is_empty() {
                 if self.curr.id.is_some()
