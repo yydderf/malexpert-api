@@ -36,7 +36,7 @@ pub async fn run(
 
     let runresp = match client.post_run(&body).await {
         Ok(v) => v,
-        Err(e) => {
+        Err(_) => {
             // error!("{}: {}", e.title, e.detail.unwrap_or_else(|| "no detail".to_string()));
             return APIResponse::err_internal("Internal Server Error", "Please try again later");
         }

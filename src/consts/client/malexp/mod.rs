@@ -1,3 +1,5 @@
+pub mod events;
+
 use once_cell::sync::Lazy;
 
 // runtime adjustable
@@ -7,4 +9,7 @@ pub static BASE_URL: Lazy<String> = Lazy::new(|| {
 });
 
 pub const CATALOG: &'static str = "/catalog";
+pub const JOBS: &'static str = "/jobs";
+pub const EVENTS: &'static str = "/events";
 pub const RUN: &'static str = "/run";
+

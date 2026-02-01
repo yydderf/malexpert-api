@@ -1,7 +1,6 @@
 use crate::domain::pipeline::Catalog;
 use crate::api::error::APIErrorBody;
 use crate::services::clients::malexp::MalexpClient;
-use rocket::serde::json::serde_json;
 
 impl MalexpClient {
     pub async fn get_catalog(&self) -> Result<Catalog, APIErrorBody> {
@@ -11,6 +10,7 @@ impl MalexpClient {
 
 #[cfg(test)]
 mod tests {
+    use rocket::serde::json::serde_json;
     use super::*;
 
     #[test]

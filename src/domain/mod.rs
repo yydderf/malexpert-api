@@ -1,3 +1,4 @@
+pub mod sse;
 pub mod json;
 pub mod signed;
 pub mod sample;

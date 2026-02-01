@@ -4,7 +4,7 @@ use tracing_subscriber::{
     registry::LookupSpan,
 };
 use tracing_log::NormalizeEvent;
-use std::fmt::Write;
+// use std::fmt::Write;
 use time::OffsetDateTime;
 use time_tz::{OffsetDateTimeExt, timezones};
 

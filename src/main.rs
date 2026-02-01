@@ -29,4 +29,5 @@ fn rocket() -> _ {
         .mount("/", routes![index, fairings::cors::options])
         .mount("/samples", routes::samples::routes())
         .mount("/pipeline", routes::pipeline::routes())
+        .mount("/jobs", routes::jobs::routes())
 }

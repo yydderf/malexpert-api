@@ -1,6 +1,6 @@
-use rocket::http::{ContentType, Status};
+use rocket::http::{ContentType, Status, Header};
 use rocket::request::Request;
-use rocket::response::{Responder, Response};
+use rocket::response::{self, Responder, Response};
 use rocket::serde::json::serde_json;
 // add readable trait (Read) to String
 use std::io::Cursor;
@@ -77,3 +77,20 @@ where
             .ok()
     }
 }
+
+pub(crate) struct ExtHeader<S>(pub S, pub Vec<Header<'static>>);
+
+impl<'r, 'o: 'r, R> Responder<'r, 'o> for ExtHeader<R>
+where
+    R: Responder<'r, 'o> 
+{
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'o> {
+        let response = self.0.respond_to(req)?;
+        let mut new_response = Response::build_from(response);
+        for header in self.1 {
+            new_response.header(header);
+        }
+        new_response.ok()
+    }
+}
+

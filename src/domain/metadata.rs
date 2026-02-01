@@ -1,12 +1,12 @@
-use std::{io::Read, path::{Path, PathBuf}, fs, convert::{TryFrom, Into}};
+use std::{io::Read, fs, convert::{TryFrom, Into}};
 
-use rocket::serde::{json::serde_json, Serialize, Deserialize};
+use rocket::serde::{Serialize, Deserialize};
 use goblin::Object;
 use data_encoding::HEXLOWER;
 use ring::digest::{Context, SHA256};
 
 use crate::domain::sample::Sample;
-use crate::domain::bininfo::{BinaryType, BinaryKind};
+use crate::domain::bininfo::BinaryType;
 
 fn shannon_entropy(counts: &[u64; 256], total: u64) -> f64 {
     if total == 0 {
